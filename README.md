@@ -28,7 +28,7 @@
 
 ### 3. 配置GitHub仓库
 
-1.fork 本仓库或直接添加文件将 `renew.yml` 放入 `.github/workflows/` 目录，`renew.py` 放在仓库根目录。
+1. fork 本仓库或直接添加文件将 `renew.yml` 放入 `.github/workflows/` 目录，`renew.py` 放在仓库根目录。
 
 2. 配置 Secrets
 
