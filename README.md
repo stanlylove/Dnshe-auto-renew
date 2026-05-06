@@ -14,10 +14,24 @@
 
 ## 🚀 快速开始
 
-### 1. Fork 本仓库或直接添加文件
-将 `renew.yml` 放入 `.github/workflows/` 目录，`renew.py` 放在仓库根目录。
+### 1.获取DNSHE API 密钥
 
-### 2. 配置 Secrets
+1. 登录 [DNSHE](https://my.dnshe.com/) 。
+2. 进入 **“免费域名”** 页面 。
+3. 在底部的 **“API 管理”** 卡片中点击 **“创建 API 密钥”** 。
+4. 妥善保存获取到的 `API Key` 和 `API Secret` 。
+
+### 2. 获取通知渠道 Token
+
+- **Telegram**：在 Telegram 中搜索 `@BotFather`，发送 `/newbot` 创建机器人，获得 `TELEGRAM_BOT_TOKEN`；接着搜索 `@userinfobot`，发送任意消息获取自己的 `TELEGRAM_CHAT_ID`。
+- **PushPlus**：访问 [pushplus.plus](https://www.pushplus.plus/) 登录后，在“发送消息”页面即可看到您的 Token。
+
+### 3. 配置GitHub仓库
+
+1.fork 本仓库或直接添加文件将 `renew.yml` 放入 `.github/workflows/` 目录，`renew.py` 放在仓库根目录。
+
+2. 配置 Secrets
+
 在仓库 `Settings > Secrets and variables > Actions` 中添加以下密钥：
 
 | Secret 名称 | 必填 | 说明 |
@@ -35,11 +49,11 @@
 - 名称可以随意写（仅用于报告），不要包含英文冒号 `:`
 
 **示例：**
-个人账户:cfsd_xxxxxxxxxx:yyyyyyyyyyyyy;公司账户:cfsd_zzzzzzzzzz:aaaaaaaaaaaaa
+账户一:cfsd_xxxxxxxxxx:yyyyyyyyyyyyy;账户二:cfsd_zzzzzzzzzz:aaaaaaaaaaaaa
 
 将上述字符串直接填入 `DNSHE_ACCOUNTS` Secret 即可。
 
-### 3. 启用 GitHub Actions
+3. 启用 GitHub Actions
 推送代码后，Actions 会自动启用。您也可以在 `Actions` 页面手动触发 `DNSHE Auto Renew` 工作流。
 
 ## 📅 执行计划
@@ -50,6 +64,7 @@ on:
     - cron: '0 0 1 * *'   # 每月 1 日 北京时间 早上8：00（UTC 0:00）
 ```
 推荐使用 crontab.guru 调试表达式。
+
 
 ## 通知效果预览
 以下为 Telegram / PushPlus 推送的消息样式：
