@@ -1,4 +1,4 @@
-import os, json, sys, time
+import os, sys, time
 import requests
 from datetime import datetime, timezone
 
@@ -40,7 +40,7 @@ def send_pushplus(token, title, content):
 
 
 def get_all_subdomains(api_key, api_secret):
-    """获取账户下全部子域名 (处理分页)"""
+    """获取账户下全部子域名（处理分页）"""
     headers = {
         "X-API-Key": api_key,
         "X-API-Secret": api_secret
@@ -75,13 +75,20 @@ def get_all_subdomains(api_key, api_secret):
 
 
 def process_account(account):
-    """处理单个账号，返回结果字典"""
-    name = account.get("name", "Unknown")
+    """处理单个账户，返回包含结果的字典"""
+    name = account["name"]
     api_key = account["api_key"]
     api_secret = account["api_secret"]
-    results = {"name": name, "total": 0, "success": [], "skipped": [], "failed": []}
+    results = {
+        "name": name,
+        "total": 0,
+        "success": [],
+        "skipped": [],
+        "permanent": [],   # 新增：永久域名（无需续期）
+        "failed": []
+    }
 
-    print(f"\n处理账号: {name}")
+    print(f"\n处理账户: {name}")
     subdomains = get_all_subdomains(api_key, api_secret)
     if not subdomains:
         print("  未获取到任何域名，可能 API 密钥错误")
@@ -102,8 +109,13 @@ def process_account(account):
                 "endpoint": "subdomains",
                 "action": "renew"
             }
-            resp = requests.post(API_BASE, headers=headers, params=renew_params,
-                                 json={"subdomain_id": sub_id}, timeout=30)
+            resp = requests.post(
+                API_BASE,
+                headers=headers,
+                params=renew_params,
+                json={"subdomain_id": sub_id},
+                timeout=30
+            )
             data = resp.json()
         except Exception as e:
             results["failed"].append({
@@ -113,18 +125,27 @@ def process_account(account):
             continue
 
         if data.get("success"):
+            # 续期成功
             prev = data.get("previous_expires_at", "?")
             new = data.get("new_expires_at", "?")
+            # 额外检查：若 new_expires_at 为 "never" 等特殊值，也可视为永久（但正式API通常返回成功+常规时间）
             results["success"].append({
                 "domain": full_domain,
                 "prev": prev,
                 "new": new
             })
         else:
+            message = data.get("message", "")
             error_code = data.get("error_code", "")
-            message = data.get("message", "未知错误")
-            if error_code == "renewal_not_yet_available":
-                # 尝试获取当前过期时间
+
+            # 🔥 判定是否“永不过期”
+            if "subdomain is set to never expire" in message.lower():
+                results["permanent"].append({
+                    "domain": full_domain,
+                    "message": message
+                })
+            elif error_code == "renewal_not_yet_available":
+                # 尚未到续期窗口
                 prev = data.get("details", {}).get("expires_at", "?")
                 results["skipped"].append({
                     "domain": full_domain,
@@ -136,28 +157,34 @@ def process_account(account):
                     "domain": full_domain,
                     "error": message
                 })
-        time.sleep(0.5)
+        time.sleep(0.5)   # 遵守速率限制
 
     return results
 
 
 def build_report(all_results):
-    """生成 HTML 格式报告"""
+    """生成 HTML 格式的续期报告"""
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [f"<b>📅 DNSHE 自动续期报告 - {now_str}</b>\n"]
     for res in all_results:
         total = res["total"]
         succ = len(res["success"])
         skip = len(res["skipped"])
+        perm = len(res["permanent"])
         fail = len(res["failed"])
-        lines.append(f"🔹 <b>账号：{res['name']}</b>")
-        lines.append(f"   总域名：{total} | ✅续期成功：{succ} | ⏭️跳过：{skip} | ❌失败：{fail}\n")
+        lines.append(f"🔹 <b>账户：{res['name']}</b>")
+        lines.append(
+            f"   总域名：{total} | ✅续期成功：{succ} | ⏭️跳过：{skip} | ♾️永久：{perm} | ❌失败：{fail}\n"
+        )
         for s in res["success"]:
             lines.append(f"   ✅ <code>{s['domain']}</code>")
             lines.append(f"      到期时间：{s['prev']} → {s['new']}")
         for s in res["skipped"]:
             lines.append(f"   ⏭️ <code>{s['domain']}</code>")
             lines.append(f"      尚未到续期窗口（当前到期：{s['prev']}）")
+        for p in res["permanent"]:
+            lines.append(f"   ♾️ <code>{p['domain']}</code>")
+            lines.append(f"      永久域名（无需续期）")
         for f in res["failed"]:
             lines.append(f"   ❌ <code>{f['domain']}</code>")
             lines.append(f"      续期失败：{f['error']}")
@@ -167,8 +194,7 @@ def build_report(all_results):
 
 def parse_accounts(raw):
     """
-    解析简化格式的账号配置：
-    格式：名称:API_KEY:API_SECRET
+    解析简化格式：名称:API_KEY:API_SECRET
     多个账户用英文分号 ; 分隔
     """
     accounts = []
@@ -207,12 +233,13 @@ def main():
             res = process_account(acc)
             all_results.append(res)
         except Exception as e:
-            print(f"处理账号 {acc.get('name', 'Unknown')} 出错: {e}")
+            print(f"处理账户 {acc.get('name', 'Unknown')} 出错: {e}")
             all_results.append({
                 "name": acc.get("name", "Unknown"),
                 "total": 0,
                 "success": [],
                 "skipped": [],
+                "permanent": [],
                 "failed": [{"domain": "N/A", "error": str(e)}]
             })
 
@@ -220,6 +247,7 @@ def main():
     print("========== 报告 ==========")
     print(report)
 
+    # 发送通知
     telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     telegram_chat = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     pushplus_token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
