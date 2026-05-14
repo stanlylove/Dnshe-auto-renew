@@ -10,10 +10,6 @@
       "id": "dnshe.renew.app",
       "name": "DNSHE 续期脚本",
       "keys": ["DNSHE_RENEW_ACCOUNTS"],
-      "icons": [
-        "https://my.dnshe.com/favicon.ico",
-        "https://my.dnshe.com/favicon.ico"
-      ]
       "settings": [
         {
           "id": "DNSHE_RENEW_ACCOUNTS",
@@ -27,6 +23,10 @@
       "author": "@Stanlylove",
       "repo": "https://github.com/stanlylove/Dnshe-auto-renew",
       "script": "",
+      "icons": [
+        "https://my.dnshe.com/favicon.ico",
+        "https://my.dnshe.com/favicon.ico"
+      ]
      
     }
   ]
