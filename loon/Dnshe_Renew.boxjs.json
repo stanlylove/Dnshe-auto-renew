@@ -3,21 +3,21 @@
   "name": "DNSHE 免费域名续期",
   "author": "@Stanlylove",
   "icon": "https://avatars.githubusercontent.com/stanlylove?s=120",
-  "repo": "https://github.com/stanlylove/loon-scripts",
+  "repo": "https://github.com/stanlylove/Dnshe-auto-renew",
   "description": "自动续期 DNSHE 免费域名，支持多账户",
   "apps": [
     {
       "id": "dnshe.renew.app",
       "name": "DNSHE 续期脚本",
       "keys": ["DNSHE_RENEW_ACCOUNTS"],
+      "icons": [
+        "https://my.dnshe.com/favicon.ico",
+        "https://my.dnshe.com/favicon.ico"
+      ]
       "settings": [
         {
           "id": "DNSHE_RENEW_ACCOUNTS",
           "name": "账户列表",
-           "icons": [
-        "https://my.dnshe.com/favicon.ico",
-        "https://my.dnshe.com/favicon.ico"
-      ]
           "val": "",
           "type": "textarea",
           "placeholder": "账户一:APIKey:APISecret;账户二:APIKey2:APISecret2",
@@ -25,7 +25,7 @@
         }
       ],
       "author": "@Stanlylove",
-      "repo": "https://github.com/stanlylove/loon-scripts",
+      "repo": "https://github.com/stanlylove/Dnshe-auto-renew",
       "script": "",
      
     }
