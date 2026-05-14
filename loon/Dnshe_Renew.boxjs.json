@@ -1,17 +1,27 @@
 {
-  "id": "dnshe.renew",
+  "id": "dnshe.renew.subscription",
   "name": "DNSHE 免费域名续期",
   "author": "Loon Script",
   "repo": "https://github.com/your-repo/loon-scripts",
   "description": "自动续期 DNSHE 免费域名，支持多账户",
-  "settings": [
+  "apps": [
     {
-      "id": "DNSHE_RENEW_ACCOUNTS",
-      "name": "账户列表",
-      "type": "textarea",
-      "placeholder": "账户一:APIKey:APISecret;账户二:APIKey2:APISecret2",
-      "default": "",
-      "description": "多个账户用英文分号 ; 分隔"
+      "id": "dnshe.renew.app",
+      "name": "DNSHE 续期脚本",
+      "keys": ["DNSHE_RENEW_ACCOUNTS"],
+      "settings": [
+        {
+          "id": "DNSHE_RENEW_ACCOUNTS",
+          "name": "账户列表",
+          "val": "",
+          "type": "textarea",
+          "placeholder": "账户一:APIKey:APISecret;账户二:APIKey2:APISecret2",
+          "desc": "多个账户用英文分号 ; 分隔，每账户格式为 名称:Key:Secret"
+        }
+      ],
+      "author": "Loon Script",
+      "repo": "https://github.com/your-repo/loon-scripts",
+      "script": ""
     }
   ]
 }
