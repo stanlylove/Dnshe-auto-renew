@@ -2,7 +2,7 @@
   "id": "dnshe.renew.subscription",
   "name": "DNSHE 免费域名续期",
   "author": "Loon Script",
-  "repo": "https://github.com/your-repo/loon-scripts",
+  "repo": "https://github.com/stanlylove/loon-scripts",
   "description": "自动续期 DNSHE 免费域名，支持多账户",
   "apps": [
     {
@@ -20,8 +20,12 @@
         }
       ],
       "author": "Loon Script",
-      "repo": "https://github.com/your-repo/loon-scripts",
-      "script": ""
+      "repo": "https://github.com/stanlylove/loon-scripts",
+      "script": "",
+      "icons": [
+        "https://my.dnshe.com/favicon.ico",
+        "https://avatars.githubusercontent.com/stanlylove?s=120"
+      ]
     }
   ]
 }
