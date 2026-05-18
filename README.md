@@ -37,7 +37,7 @@
 
 | Secret 名称 | 必填 | 说明 |
 | :--- | :--- | :--- |
-| `DNSHE_ACCOUNTS` | ✅ | 账号列表，格式见下方 |
+| `DNSHE_ACCOUNTS` | ✅ | 账号列表，格式见下方 `DNSHE_ACCOUNTS` 填写格式 |
 | `TELEGRAM_BOT_TOKEN` | ❌ | Telegram Bot 令牌 |
 | `TELEGRAM_CHAT_ID` | ❌ | Telegram 接收消息的 Chat ID |
 | `PUSHPLUS_TOKEN` | ❌ | PushPlus 令牌 (pushplus.plus) |
@@ -65,7 +65,7 @@
 将上述字符串直接填入 `DNSHE_ACCOUNTS` Secret 即可。
 
 3. 启用 GitHub Actions
-推送代码后，Actions 会自动启用。您也可以在 `Actions` 页面手动触发 `DNSHE Auto Renew` 工作流。
+推送代码后，Actions 会自动启用。您也可以在 `操作` 页面手动触发 `DNSHE Auto Renew` 工作流。
 
 ## 📅 执行计划
 工作流默认每月 1 日 北京时间 早上 8 点（UTC 0:00） 自动执行。您可修改 `.github/workflows/renew.yml` 中的 `cron` 表达式：
