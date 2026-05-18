@@ -1,8 +1,14 @@
 /**
  * DNSHE 免费域名批量续期 (Loon Cron)
- * 支持 BoxJs 订阅配置 -> 自动读取 DNSHE_RENEW_ACCOUNTS
- * 回退顺序：BoxJs -> argument
- * 添加了 console.log 日志，可在 Loon 日志页面查看
+ * 
+ * 功能：
+ * - 多账户支持（BoxJs 订阅配置优先，argument 备选）
+ * - 自动获取所有子域名并续期
+ * - 将 "never expire" 的域名归为永久域名，不会判定为失败
+ * - 即时推送详细报告，按成功/跳过/永久/失败分组
+ * 
+ * BoxJs Key：DNSHE_RENEW_ACCOUNTS
+ * 格式：账户一:APIKey:APISecret;账户二:APIKey:APISecret
  */
 const API_BASE = "https://api005.dnshe.com/index.php?m=domain_hub";
 const PER_PAGE = 200;
@@ -98,7 +104,14 @@ async function getAllSubdomains(key, secret) {
 // ========== 4. 处理单个账户 ==========
 async function processAccount(acc) {
     console.log(`\n--- 开始处理账户: ${acc.name} ---`);
-    const result = { name: acc.name, success: [], skipped: [], failed: [], summary: { success: 0, skipped: 0, failed: 0 } };
+    const result = {
+        name: acc.name,
+        success: [],
+        skipped: [],
+        permanent: [],   // 永久域名
+        failed: [],
+        summary: { success: 0, skipped: 0, permanent: 0, failed: 0 }
+    };
     try {
         const subs = await getAllSubdomains(acc.key, acc.secret);
         const active = subs.filter(d => d.status === "active");
@@ -109,14 +122,29 @@ async function processAccount(acc) {
             try {
                 const res = await httpRequest("POST", "subdomains", "renew", { subdomain_id: sub.id }, acc.key, acc.secret);
                 if (res.success) {
-                    const msg = `${domain} → 续期至 ${res.new_expires_at || "未知"}`;
-                    console.log(`    ✅ ${msg}`);
-                    result.success.push(msg);
-                    result.summary.success++;
+                    // 检查是否为永久域名
+                    if (res.never_expires === 1 || (res.message && res.message.toLowerCase().includes("never expire"))) {
+                        const msg = `${domain} (永久域名)`;
+                        console.log(`    ♾️ 永久域名: ${msg}`);
+                        result.permanent.push(msg);
+                        result.summary.permanent++;
+                    } else {
+                        const newExpiry = res.new_expires_at || "未知";
+                        const msg = `${domain} → 续期至 ${newExpiry}`;
+                        console.log(`    ✅ ${msg}`);
+                        result.success.push(msg);
+                        result.summary.success++;
+                    }
                 } else {
                     const code = res.error_code || "";
                     const msg = res.message || JSON.stringify(res);
-                    if (code === "renewal_not_yet_available") {
+                    // 对于续期失败的响应也检查一下是否暗示永久域名（防御性处理）
+                    if (res.never_expires === 1 || (res.message && res.message.toLowerCase().includes("never expire"))) {
+                        const note = `${domain} (永久域名)`;
+                        console.log(`    ♾️ 永久域名: ${note}`);
+                        result.permanent.push(note);
+                        result.summary.permanent++;
+                    } else if (code === "renewal_not_yet_available") {
                         console.log(`    ⏭️ 跳过: ${domain} (未到窗口)`);
                         result.skipped.push(`${domain} (未到续期窗口)`);
                         result.summary.skipped++;
@@ -138,24 +166,32 @@ async function processAccount(acc) {
         result.failed.push(`账户级错误: ${e}`);
         result.summary.failed++;
     }
-    console.log(`--- ${acc.name} 结果: ✅${result.summary.success} ⏭️${result.summary.skipped} ❌${result.summary.failed} ---`);
+    console.log(`--- ${acc.name} 结果: ✅${result.summary.success} ♾️${result.summary.permanent} ⏭️${result.summary.skipped} ❌${result.summary.failed} ---`);
     return result;
 }
 
 // ========== 5. 通知格式化 ==========
 function formatReport(results) {
-    const lines = [], total = { success: 0, skipped: 0, failed: 0 };
+    const lines = [], total = { success: 0, skipped: 0, permanent: 0, failed: 0 };
     for (const r of results) {
         lines.push(`【${r.name}】`);
-        if (r.success.length) lines.push(`✅ 成功 (${r.summary.success}):`, ...r.success.map(s => `  ${s}`));
+        if (r.success.length) lines.push(`✅ 成功续期 (${r.summary.success}):`, ...r.success.map(s => `  ${s}`));
+        if (r.permanent.length) lines.push(`♾️ 永久域名 (${r.summary.permanent}):`, ...r.permanent.map(s => `  ${s}`));
         if (r.skipped.length) lines.push(`⏭️ 跳过 (${r.summary.skipped}):`, ...r.skipped.map(s => `  ${s}`));
         if (r.failed.length) lines.push(`❌ 失败 (${r.summary.failed}):`, ...r.failed.map(s => `  ${s}`));
         lines.push("");
         total.success += r.summary.success;
+        total.permanent += r.summary.permanent;
         total.skipped += r.summary.skipped;
         total.failed += r.summary.failed;
     }
-    return { content: lines.join("\n"), summary: `总计: ✅${total.success} ⏭️${total.skipped} ❌${total.failed}` };
+    const parts = [];
+    if (total.success > 0) parts.push(`✅${total.success}`);
+    if (total.permanent > 0) parts.push(`♾️${total.permanent}`);
+    if (total.skipped > 0) parts.push(`⏭️${total.skipped}`);
+    if (total.failed > 0) parts.push(`❌${total.failed}`);
+    const summary = `总计: ${parts.join(" ")}`;
+    return { content: lines.join("\n"), summary };
 }
 
 // ========== 6. 主流程 ==========

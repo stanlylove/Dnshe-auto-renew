@@ -4,7 +4,7 @@
   "author": "@Stanlylove",
   "icon": "https://avatars.githubusercontent.com/stanlylove?s=120",
   "repo": "https://github.com/stanlylove/Dnshe-auto-renew",
-  "description": "自动续期 DNSHE 免费域名，支持多账户",
+  "description": "自动续期 DNSHE 免费域名，支持多账户，自动识别永久域名",
   "apps": [
     {
       "id": "dnshe.renew.app",
@@ -17,7 +17,7 @@
           "val": "",
           "type": "textarea",
           "placeholder": "账户一:APIKey:APISecret;账户二:APIKey2:APISecret2",
-          "desc": "多个账户用英文分号 ; 分隔，每账户格式为 名称:Key:Secret"
+          "desc": "多个账户用英文分号 ; 分隔，每账户格式为 名称:Key:Secret;永久域名将被标记为 ♾️ 且不算失败。"
         }
       ],
       "author": "@Stanlylove",
